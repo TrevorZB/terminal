@@ -1,0 +1,83 @@
+:root {
+  --terminal-background-color: black;
+  --basic-text-color: white;
+  --terminal-horizontal-margin: 20%;
+  --terminal-vertical-margin: 5%;
+  --terminal-line-height: 25px;
+  --terminal-font-size: 15px;
+  --terminal-font-family: monospace;
+  --terminal-num-lines: 25;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#terminal {
+  height: 100%;
+  font-family: var(--terminal-font-family);
+  font-size: var(--terminal-font-size);
+}
+
+#input-bar {
+  display: flex;
+  width: 100%;
+  height: var(--terminal-line-height);
+  font-family: var(--terminal-font-family);
+  font-size: var(--terminal-font-size);
+}
+
+#output-container {
+  background-color: white;
+  border: solid black;
+  color: var(--basic-text-color);
+  overflow: auto;
+  max-height: calc(var(--terminal-line-height) * var(--terminal-num-lines));
+  margin-top: var(--terminal-vertical-margin);
+  margin-left: var(--terminal-horizontal-margin);
+  margin-right: var(--terminal-horizontal-margin);
+}
+
+#output {
+  background-color: var(--terminal-background-color);
+  color: var(--basic-text-color);
+  line-height: var(--terminal-line-height);
+  padding-left: 0.3%;
+  font-family: var(--terminal-font-family);
+  font-size: var(--terminal-font-size);
+}
+
+#input-container {
+  flex: 1;
+  background-color: var(--terminal-background-color);
+  color: var(--basic-text-color);
+  margin-right: var(--terminal-horizontal-margin);
+  width: 100%;
+}
+
+#input {
+  background-color: var(--terminal-background-color);
+  color: var(--basic-text-color);
+  font-family: var(--terminal-font-family);
+  font-size: var(--terminal-font-size);
+  width: 100%;
+  border: none;
+}
+
+input:focus {
+  outline: none;
+}
+
+#prompt {
+  background-color: var(--terminal-background-color);
+  color: var(--basic-text-color);
+  font-family: var(--terminal-font-family);
+  font-size: var(--terminal-font-size);
+  border: none;
+  margin-left: 20%;
+  padding-left: 0.3%;
+  padding-right: 0.6%;
+  padding-top: 0.05%;
+}
