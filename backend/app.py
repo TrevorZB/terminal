@@ -61,12 +61,13 @@ class Project(db.Model):
     name = db.Column(db.String(50), primary_key=True)
     description = db.Column(db.String(200))
     url = db.Column(db.String(200))
+    host = db.Column(db.String(200))
 
-    def __init__(self, name, description, url):
+    def __init__(self, name, description, url, host):
         self.name = name
         self.description = description
         self.url = url
-
+        self.host = host
 
 @app.route('/api/users', methods=['POST'])
 #@cross_origin(origin='localhost',headers=['Content- Type','Authorization'])
@@ -91,42 +92,58 @@ def commands():
 
 @app.route('/api/projects', methods=['POST'])
 def projects():
+    resp = {
+        'valid_args': True,
+        'valid_credentials': True,
+        'outputs': []
+    }
     if request.method == 'POST':
         data = request.get_json()
         if data['args']:
             valid_args = ['-u']
             for arg in data['args']:
                 if arg not in valid_args:
-                    # send back invalid args response
-                    pass
+                    resp['valid_args'] = False
+                    return jsonify(resp)
             for arg in data['args']:
                 if arg == '-u':
                     if data['credentials']['accessLevel'] < 1:
-                        updateProjects()
+                        updateProjects(resp['outputs'])
                     else:
-                        # send back invalid access response
-                        pass
+                        resp['valid_credentials'] = False
+                        return jsonify(resp)
         else:
             all_db_projects = Project.query.all()
+            for p in all_db_projects:
+                resp['outputs'].append('')
+                resp['outputs'].append('name: {0}'.format(p.name))
+                resp['outputs'].append('  function: {0}'.format(p.description))
+                resp['outputs'].append('  github repo: {0}'.format(p.url))
+                if p.host:
+                    resp['outputs'].append('  hosted at: {0}'.format(p.host))
             print('Returning all projects in the database')
+        return jsonify(resp)
 
-        return {}
-
-def updateProjects():
+def updateProjects(outputs):
     r = requests.get('https://api.github.com/users/TrevorZB/repos', auth=('TrevorZB', '')).json()
     projects = [{'name': p['name'], 'description': p['description'], 'url': '{0}/{1}'.format('https://github.com/TrevorZB', p['name'])} for p in r if 'name' in p and 'description' in p]
     for p in projects:
+        outputs.append('checking project: {0}'.format(p['name']))
         db_project = Project.query.filter(Project.name == p['name']).first()
         if db_project:
             if db_project.description != p['description']:
+                outputs.append('project {0} has outdated description: updating...'.format(p['name']))
                 print('Changing description of project {0} to {1}'.format(p, p['description']))
                 db_project.description = p['description']
             if db_project.url != p['url']:
+                outputs.append('project {0} has outdated url: updating...'.format(p['url']))
                 print('Changing url of project {0} to {1}'.format(p, p['url']))
                 db_project.url = p['url']
+            outputs.append('project {0} is up to date'.format(p['name']))
             db.session.commit()
             
         else:
+            outputs.append('project {0} not present in database: adding to database...'.format(p['name']))
             # no match found, need to add to db
             print("Adding {0} {1} {2} to the Project table".format(p['name'], p['description'], p['url']))
             proj = Project(p['name'], p['description'], p['url'])

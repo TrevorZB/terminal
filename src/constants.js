@@ -1,7 +1,14 @@
 const constants = {
   ADMIN_ACCESS_LEVEL: 0,
   GUEST_ACCESS_LEVEL: 1,
-  GREETING: ["welcome", "guest username: guest", "guest password: guest"],
+  GREETING: [
+    "welcome",
+    "username: guest",
+    "password: guest",
+    "once logged in:",
+    "  'projects': list of projects",
+    "  'help': list commands",
+  ],
   PROMPTS: {
     BASE: "$",
     LOGGED_IN_BASE: (t) => `(${t}) $`,

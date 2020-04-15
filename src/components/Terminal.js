@@ -110,7 +110,10 @@ class Terminal extends Component {
     const username = this.state.input;
     const outputs = [
       ...this.state.outputs,
-      constants.PROMPTS.USERNAME.concat(" ", username),
+      constants.PROMPTS.BASE.concat(
+        " ",
+        constants.PROMPTS.USERNAME.concat(" ", username)
+      ),
     ];
     const input = "";
     this.setState({
@@ -123,9 +126,12 @@ class Terminal extends Component {
     const password = this.state.input;
     let outputs = [
       ...this.state.outputs,
-      constants.PROMPTS.PASSWORD.concat(
+      constants.PROMPTS.BASE.concat(
         " ",
-        this.generateStars(this.state.input.length)
+        constants.PROMPTS.PASSWORD.concat(
+          " ",
+          this.generateStars(this.state.input.length)
+        )
       ),
     ];
     let credentials = { ...this.state.credentials, password };
@@ -185,19 +191,26 @@ class Terminal extends Component {
   handleLogoutCommand = (command, args) => {
     let outputs;
     const input = "";
-    let credentials;
+    let credentials = this.state.credentials;
     if (!this.checkAccess(command.access)) {
       outputs = this.invalidAccessOutput(command.name);
     } else if (!this.logoutCheckArgs(args)) {
       outputs = this.invalidArgOutput(command.name);
     } else {
-      outputs = [
-        ...this.state.outputs,
-        this.state.credentials.username.concat(
-          ": ",
-          constants.OUTPUTS.LOGOUT_MESSAGE
-        ),
-      ];
+      if (args.length !== 0) {
+        outputs = [];
+      } else {
+        outputs = [
+          ...this.state.outputs,
+          constants.PROMPTS.LOGGED_IN_BASE(
+            this.state.credentials.username
+          ).concat(" ", this.state.input),
+          this.state.credentials.username.concat(
+            ": ",
+            constants.OUTPUTS.LOGOUT_MESSAGE
+          ),
+        ];
+      }
       credentials = {
         ...this.state.credentials,
         username: "",
@@ -209,7 +222,15 @@ class Terminal extends Component {
     this.setState({ outputs, input, credentials });
   };
   logoutCheckArgs = (args) => {
-    return args.length < 1;
+    if (args.length > 1) {
+      return false;
+    }
+    if (args.length === 1) {
+      if (args[0] !== "-c") {
+        return false;
+      }
+    }
+    return true;
   };
   handleHelpCommand = (command, args) => {
     let c;
@@ -217,32 +238,68 @@ class Terminal extends Component {
     let input = "";
     if (!this.checkAccess(command.access)) {
       outputs = this.invalidAccessOutput(command.name);
-    } else if (!(c = this.helpCheckArgs(command, args))) {
+    } else if (!this.helpCheckArgs(command, args)) {
       outputs = this.invalidArgOutput(command.name);
     } else {
-      outputs = [...this.state.outputs, ...c.description];
+      if (args.length === 1) {
+        c = this.state.commands.find((c) => c.name === args[0].slice(1));
+        outputs = [
+          ...this.state.outputs,
+          constants.PROMPTS.LOGGED_IN_BASE(
+            this.state.credentials.username
+          ).concat(" ", this.state.input),
+          ...c.description,
+        ];
+      } else {
+        outputs = [
+          ...this.state.outputs,
+          constants.PROMPTS.LOGGED_IN_BASE(
+            this.state.credentials.username
+          ).concat(" ", this.state.input),
+        ];
+        this.state.commands.forEach((c) => {
+          outputs = [...outputs, ...c.description];
+        });
+      }
     }
     this.setState({ outputs, input });
   };
   helpCheckArgs = (command, args) => {
-    if (!args.length) {
-      return command;
+    if (args.length > 1) {
+      return false;
     }
     if (args.length === 1) {
-      command = this.state.commands.find((c) => c.name === args[0]);
-      return command;
+      command = this.state.commands.find((c) => c.name === args[0].slice(1));
+      if (command) {
+        return true;
+      } else {
+        return false;
+      }
     }
-    return false;
+    return true;
   };
   handleProjectsCommand = async (command, args) => {
     const input = "";
     const credentials = this.state.credentials;
+    let outputs;
     const resp = await axios.post("http://127.0.0.1:5000/api/projects", {
       args,
       credentials,
     });
-    console.log(resp.data);
-    this.setState({ input });
+    if (!resp.data.valid_credentials) {
+      outputs = this.invalidAccessOutput(command.name);
+    } else if (!resp.data.valid_args) {
+      outputs = this.invalidArgOutput(command.name);
+    } else {
+      outputs = [
+        ...this.state.outputs,
+        constants.PROMPTS.LOGGED_IN_BASE(
+          this.state.credentials.username
+        ).concat(" ", this.state.input),
+        ...resp.data.outputs,
+      ];
+    }
+    this.setState({ input, outputs });
   };
   checkAccess = (access) => {
     return this.state.credentials.accessLevel <= access;
@@ -250,12 +307,20 @@ class Terminal extends Component {
   invalidAccessOutput = (commandText) => {
     return [
       ...this.state.outputs,
+      constants.PROMPTS.LOGGED_IN_BASE(this.state.credentials.username).concat(
+        " ",
+        this.state.input
+      ),
       commandText.concat(": ", constants.OUTPUTS.INVALID_ACCESS_LEVEL),
     ];
   };
   invalidArgOutput(commandText) {
     return [
       ...this.state.outputs,
+      constants.PROMPTS.LOGGED_IN_BASE(this.state.credentials.username).concat(
+        " ",
+        this.state.input
+      ),
       commandText.concat(": ", constants.OUTPUTS.INVALID_ARGS),
       constants.OUTPUTS.HELP_MESSAGE(commandText),
     ];

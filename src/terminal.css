@@ -47,6 +47,7 @@ body {
   padding-left: 0.3%;
   font-family: var(--terminal-font-family);
   font-size: var(--terminal-font-size);
+  white-space: pre;
 }
 
 #input-container {
@@ -80,4 +81,13 @@ input:focus {
   padding-left: 0.3%;
   padding-right: 0.6%;
   padding-top: 0.05%;
+}
+
+#url {
+  background-color: var(--terminal-background-color);
+  color: #a6c8ff;
+  line-height: var(--terminal-line-height);
+  padding-left: 0.3%;
+  font-family: var(--terminal-font-family);
+  font-size: var(--terminal-font-size);
 }

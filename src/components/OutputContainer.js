@@ -14,7 +14,7 @@ const OutputContainer = (props) => {
         setTimeout(() => {
           let newDisplay = display.slice(0, display.length - 1);
           setDisplay(newDisplay);
-        }, 40);
+        }, 20);
       }
     } else {
       let index = display.length;
